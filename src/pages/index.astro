@@ -1,0 +1,28 @@
+---
+import Layout from '../layouts/Layout.astro';
+import FitnessWizard from '../components/FitnessWizard';
+---
+
+<Layout title="Get Fit With Bura - Transform Your Body">
+	<!-- Hero Section -->
+	<section class="min-h-[80vh] bg-bura-black flex items-center justify-center px-4">
+		<div class="max-w-md mx-auto text-center space-y-8">
+			<h1 class="text-4xl md:text-5xl font-bold leading-tight">
+				Transform Your Body.<br />
+				Custom Kenyan Fitness Plans.
+			</h1>
+			<a 
+				href="#wizard-container"
+				class="inline-block bg-bura-green text-bura-black font-bold px-8 py-4 rounded-full hover:opacity-90 active:scale-95 transition-all"
+			>
+				Get Started
+			</a>
+		</div>
+	</section>
+
+	<!-- Wizard Container -->
+	<div id="wizard-container" class="min-h-screen bg-bura-black py-16">
+		<FitnessWizard client:load />
+	</div>
+</Layout>
+

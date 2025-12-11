@@ -1,0 +1,191 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getPlanContent, getScheduleDays, getWorkoutPlaceholder } from '../../lib/contentMap';
+import { supabase } from '../../lib/supabase';
+import type { UserProfile } from '../../types';
+
+// Disable prerendering for this dynamic route
+export const prerender = false;
+
+interface Props {
+  id: string;
+}
+
+const { id } = Astro.params;
+
+// Mock user profile for demo mode or when data isn't available
+const mockUserProfile: UserProfile = {
+  name: 'Demo User',
+  goal: 'fat_loss',
+  activityLevel: 'beginner',
+  trainingLocation: 'home',
+  daysAvailable: '2-3',
+  hasInjuries: false,
+  age: 25,
+  gender: 'male',
+  height: 175,
+  weight: 75,
+  equipment: ['dumbbells', 'bodyweight'],
+  phone: '+254700000000',
+};
+
+let userData: UserProfile = mockUserProfile;
+let isDemo = id === 'demo';
+
+// Fetch from Supabase if not demo mode
+if (!isDemo && id) {
+  // Fallback to demo if Supabase is not configured
+  if (!supabase) {
+    console.warn('Supabase not configured, using demo mode');
+    isDemo = true;
+    userData = mockUserProfile;
+  } else {
+    try {
+      const { data, error } = await supabase
+        .from('leads')
+        .select('name, phone, form_data')
+        .eq('plan_id', id)
+        .single();
+
+      if (error || !data) {
+        // Plan not found or database error - redirect to home
+        console.error('Plan not found or database error:', error);
+        return Astro.redirect('/');
+      }
+
+      // Merge form_data with name/phone columns
+      userData = {
+        ...data.form_data, // Spread the JSONB answers first
+        name: data.name,   // Overwrite with the top-level column data
+        phone: data.phone  // Overwrite with the top-level column data
+      } as UserProfile;
+
+      isDemo = false;
+    } catch (error) {
+      // Query failure - redirect to home
+      console.error('Error fetching plan:', error);
+      return Astro.redirect('/');
+    }
+  }
+}
+
+// Calculate Fitness Score based on activity level
+function calculateFitnessScore(activityLevel: string): number {
+  switch (activityLevel) {
+    case 'beginner':
+      return 45;
+    case 'intermediate':
+      return 68;
+    case 'advanced':
+      return 82;
+    default:
+      return 45;
+  }
+}
+
+const fitnessScore = calculateFitnessScore(userData.activityLevel);
+const planContent = getPlanContent(userData.goal, userData.trainingLocation);
+const scheduleDays = getScheduleDays(userData.daysAvailable);
+---
+
+<Layout title={`${userData.name}'s Fitness Plan - Bura Fitness`}>
+  <div class="min-h-screen bg-bura-black text-white">
+    <div class="max-w-md mx-auto px-4 py-8 pb-16">
+      {/* Header */}
+      <div class="mb-8 text-center">
+        <h1 class="text-3xl font-bold mb-2">
+          Welcome, {userData.name}.
+        </h1>
+        <p class="text-xl text-gray-300">
+          Here is your {planContent.title}
+        </p>
+      </div>
+
+      {/* Fitness Score Card */}
+      <div class="mb-8 bg-bura-gray rounded-xl p-6 border border-gray-700">
+        <div class="text-center">
+          <p class="text-sm text-gray-400 mb-2">Your Starting Bura Score</p>
+          <div class="text-5xl font-bold text-bura-green mb-2">
+            {fitnessScore}/100
+          </div>
+          <p class="text-xs text-gray-500">
+            Based on your current activity level
+          </p>
+        </div>
+      </div>
+
+      {/* Video Section - Thumbnail Placeholder */}
+      <div class="mb-8">
+        <h2 class="text-xl font-bold mb-4">Featured Workout</h2>
+        <div 
+          class="relative bg-gray-800 rounded-lg overflow-hidden aspect-video flex items-center justify-center cursor-pointer group"
+          role="button"
+          tabindex="0"
+        >
+          {/* Placeholder Background */}
+          <div class="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900"></div>
+          
+          {/* Play Icon */}
+          <div class="relative z-10 flex items-center justify-center">
+            <svg 
+              class="w-16 h-16 text-bura-green group-hover:scale-110 transition-transform" 
+              fill="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path d="M8 5v14l11-7z"/>
+            </svg>
+          </div>
+          
+          {/* Overlay Text */}
+          <div class="absolute bottom-4 left-4 right-4 text-center">
+            <p class="text-sm text-gray-300">Click to watch workout video</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Schedule List */}
+      <div class="mb-8">
+        <h2 class="text-xl font-bold mb-4">Your Weekly Schedule</h2>
+        <div class="space-y-3">
+          {scheduleDays.map((day, index) => (
+            <div 
+              key={day}
+              class="bg-bura-gray rounded-lg p-4 border border-gray-700"
+            >
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 class="font-bold text-lg mb-1">{day}</h3>
+                  <p class="text-sm text-gray-400">
+                    Day {index + 1}: {getWorkoutPlaceholder(index, userData.daysAvailable)}
+                  </p>
+                </div>
+                <div class="text-bura-green">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Medical Disclaimer (if applicable) */}
+      {userData.hasInjuries && (
+        <div class="mb-8 bg-yellow-900/20 border border-yellow-800 rounded-lg p-4">
+          <p class="text-sm text-yellow-300">
+            ⚠️ <strong>Medical Disclaimer:</strong> Please consult with a healthcare professional before beginning any exercise program, especially if you have existing medical conditions or injuries.
+          </p>
+        </div>
+      )}
+
+      {/* Demo Mode Notice */}
+      {isDemo && (
+        <div class="mt-8 text-center text-xs text-gray-500">
+          <p>Demo Mode - This is a preview of your personalized plan</p>
+        </div>
+      )}
+    </div>
+  </div>
+</Layout>
+
