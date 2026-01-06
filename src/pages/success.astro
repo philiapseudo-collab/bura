@@ -1,13 +1,36 @@
 ---
 import Layout from '../layouts/Layout.astro';
 
+// Disable prerendering for this dynamic route
+export const prerender = false;
+
 // Get WhatsApp link from query parameters
-const waLink = Astro.url.searchParams.get('waLink');
+let waLink = Astro.url.searchParams.get('waLink');
+
+// If waLink is not found, try getting it from the URL directly (in case of encoding issues)
+if (!waLink) {
+  const urlString = Astro.url.href;
+  const waLinkMatch = urlString.match(/[?&]waLink=([^&]+)/);
+  if (waLinkMatch) {
+    waLink = decodeURIComponent(waLinkMatch[1]);
+  }
+}
 
 // Redirect to home if no waLink provided
-if (!waLink) {
+if (!waLink || waLink.trim() === '') {
   return Astro.redirect('/');
 }
+
+// Decode the waLink if it's still encoded
+const decodedWaLink = decodeURIComponent(waLink);
+
+// Ensure waLink is a valid WhatsApp URL (check both encoded and decoded)
+if (!decodedWaLink.startsWith('https://wa.me/') && !waLink.startsWith('https://wa.me/')) {
+  return Astro.redirect('/');
+}
+
+// Use the decoded version
+const finalWaLink = decodedWaLink;
 ---
 
 <Layout title="You're Almost There! - Bura Fitness">
@@ -26,7 +49,7 @@ if (!waLink) {
       {/* WhatsApp Button with Pulsing Animation */}
       <div>
         <a
-          href={waLink}
+          href={finalWaLink}
           target="_blank"
           rel="noopener noreferrer"
           class="inline-block bg-bura-green text-bura-black font-bold px-8 py-6 rounded-full text-lg hover:opacity-90 active:scale-95 transition-all pulse-heartbeat"
