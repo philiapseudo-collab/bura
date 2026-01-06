@@ -248,18 +248,24 @@ export default function FitnessWizard() {
         const goalLabel = finalData.goal ? getGoalLabel(finalData.goal as Goal) : 'Not specified';
         const programLabel = finalData.selectedProgram ? getProgramLabel(finalData.selectedProgram as SelectedProgram) : 'Not specified';
 
-        const whatsappMessage = `Hi Coach Bura! 👋
-I just finished the fitness quiz. Here is my profile:
+        // Construct the parts
+        const messageParts = [
+          "Hi Coach Bura! 👋",
+          "", // Blank line
+          "I just finished the fitness quiz. Here is my profile:",
+          "", // Blank line
+          `👤 *Name:* ${finalData.name}`,
+          `🎯 *Goal:* ${goalLabel}`,
+          `🔥 *Program:* ${programLabel}`,
+          `🏥 *Injuries:* ${finalData.hasInjuries ? 'Yes' : 'No'}`,
+          "", // Blank line
+          "I'm ready to start! What are the next steps?"
+        ];
+        // Join with newline character
+        const message = messageParts.join('\n');
 
-👤 Name: ${finalData.name}
-🎯 Goal: ${goalLabel}
-🔥 Program: ${programLabel}
-🏥 Injuries: ${finalData.hasInjuries ? 'Yes' : 'No'}
-
-I'm ready to start! What are the next steps?`;
-
-        // Construct WhatsApp URL and redirect to success page
-        const whatsappUrl = `https://wa.me/${COACH_PHONE}?text=${encodeURIComponent(whatsappMessage)}`;
+        // Encode properly
+        const whatsappUrl = `https://wa.me/${COACH_PHONE}?text=${encodeURIComponent(message)}`;
         const successUrl = '/success?waLink=' + encodeURIComponent(whatsappUrl);
         window.location.href = successUrl;
       }
