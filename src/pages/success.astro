@@ -4,21 +4,23 @@ import Layout from '../layouts/Layout.astro';
 // Disable prerendering for this dynamic route
 export const prerender = false;
 
-// Get WhatsApp parameters - support both old (waLink) and new (phone + text) formats
+// Get WhatsApp parameters - support multiple formats
 let finalWaLink: string | null = null;
 
+// Try sessionStorage approach first (new method)
+// Note: We'll handle this client-side since Astro is server-side
+
+// Fallback to URL parameters
 const phone = Astro.url.searchParams.get('phone');
 const text = Astro.url.searchParams.get('text');
 
 if (phone && text) {
-  // New approach: construct URL from separate parameters (avoids double-encoding issues)
-  // The text parameter already has %0A codes for newlines, use it directly
+  // Construct URL from separate parameters
   finalWaLink = `https://wa.me/${phone}?text=${text}`;
 } else {
   // Fallback to old approach for backward compatibility
   let waLink = Astro.url.searchParams.get('waLink');
   
-  // If waLink is not found, try getting it from the URL directly (in case of encoding issues)
   if (!waLink) {
     const urlString = Astro.url.href;
     const waLinkMatch = urlString.match(/[?&]waLink=([^&]+)/);
@@ -28,20 +30,15 @@ if (phone && text) {
   }
   
   if (waLink) {
-    // Decode the waLink if it's still encoded
     const decodedWaLink = decodeURIComponent(waLink);
-    
-    // Ensure waLink is a valid WhatsApp URL
     if (decodedWaLink.startsWith('https://wa.me/') || waLink.startsWith('https://wa.me/')) {
       finalWaLink = decodedWaLink;
     }
   }
 }
 
-// Redirect to home if no valid WhatsApp link
-if (!finalWaLink || finalWaLink.trim() === '') {
-  return Astro.redirect('/');
-}
+// If no URL params found, we'll use sessionStorage (handled client-side)
+// Don't redirect if finalWaLink is null - let client-side script handle it
 ---
 
 <Layout title="You're Almost There! - Bura Fitness">
@@ -60,7 +57,8 @@ if (!finalWaLink || finalWaLink.trim() === '') {
       {/* WhatsApp Button with Pulsing Animation */}
       <div>
         <a
-          href={finalWaLink}
+          id="whatsapp-link"
+          href={finalWaLink || '#'}
           target="_blank"
           rel="noopener noreferrer"
           class="inline-block bg-bura-green text-bura-black font-bold px-8 py-6 rounded-full text-lg hover:opacity-90 active:scale-95 transition-all pulse-heartbeat"
@@ -136,4 +134,31 @@ if (!finalWaLink || finalWaLink.trim() === '') {
     animation: heartbeat 2s ease-in-out infinite;
   }
 </style>
+
+<script>
+  // Read WhatsApp data from sessionStorage (avoids URL encoding issues)
+  const phone = sessionStorage.getItem('whatsappPhone');
+  const message = sessionStorage.getItem('whatsappMessage');
+  
+  if (phone && message) {
+    // Construct WhatsApp URL directly - message already has %0A codes
+    const whatsappUrl = `https://wa.me/${phone}?text=${message}`;
+    const linkElement = document.getElementById('whatsapp-link');
+    
+    if (linkElement) {
+      linkElement.href = whatsappUrl;
+    }
+    
+    // Clean up sessionStorage after use
+    sessionStorage.removeItem('whatsappPhone');
+    sessionStorage.removeItem('whatsappMessage');
+  } else {
+    // If no sessionStorage data, check if we have a fallback link from server
+    const linkElement = document.getElementById('whatsapp-link');
+    if (linkElement && linkElement.href === '#') {
+      // No valid link found, redirect to home
+      window.location.href = '/';
+    }
+  }
+</script>
 

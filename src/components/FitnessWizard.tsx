@@ -268,11 +268,13 @@ export default function FitnessWizard() {
         encodedMessage = encodedMessage.replace(/%0D%0A/g, '%0A'); // Replace \r\n with \n
         encodedMessage = encodedMessage.replace(/%0D/g, '%0A'); // Replace \r with \n
         
-        // 4. Pass encoded message to success page, which will construct the URL
-        // This avoids double-encoding the %0A codes
-        // The success page will build: https://wa.me/COACH_PHONE?text=encodedMessage
-        const successUrl = `/success?phone=${COACH_PHONE}&text=${encodedMessage}`;
-        window.location.href = successUrl;
+        // 4. Store in sessionStorage and redirect to success page
+        // This avoids any URL encoding issues when passing through query parameters
+        sessionStorage.setItem('whatsappPhone', COACH_PHONE);
+        sessionStorage.setItem('whatsappMessage', encodedMessage);
+        
+        // Redirect to success page which will read from sessionStorage
+        window.location.href = '/success';
       }
     }
   };
