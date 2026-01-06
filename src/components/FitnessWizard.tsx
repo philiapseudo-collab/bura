@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 type Gender = 'male' | 'female';
-type Goal = 'fat_loss' | 'muscle_building' | 'body_toning' | 'mobility' | 'strength' | 'general_fitness';
+type Goal = 'general_fitness' | 'strength' | 'weight_loss_body_toning';
 type ActivityLevel = 'beginner' | 'intermediate' | 'advanced';
 type DaysAvailable = '2-3' | '3-4' | '4-5' | '5-6';
 type PreferredMethod = 'home_workouts' | 'gym_training' | 'calisthenics';
@@ -14,12 +14,9 @@ const COACH_PHONE = '254746110624';
 // Helper functions to convert enum values to human-readable labels
 function getGoalLabel(goal: Goal): string {
   const labels: Record<Goal, string> = {
-    fat_loss: 'Fat Loss',
-    muscle_building: 'Muscle Building',
-    body_toning: 'Body Toning',
-    mobility: 'Mobility',
-    strength: 'Strength',
     general_fitness: 'General Fitness',
+    strength: 'Strength Training',
+    weight_loss_body_toning: 'Weight Loss and Body Toning',
   };
   return labels[goal] || goal;
 }
@@ -343,12 +340,9 @@ I'm ready to start.`;
       <h2 className="text-2xl font-bold text-center mb-6">What's your primary goal?</h2>
       <div className="space-y-3">
         {([
-          { value: 'fat_loss', label: 'Fat Loss' },
-          { value: 'muscle_building', label: 'Muscle Building' },
-          { value: 'body_toning', label: 'Body Toning' },
-          { value: 'mobility', label: 'Mobility' },
-          { value: 'strength', label: 'Strength' },
           { value: 'general_fitness', label: 'General Fitness' },
+          { value: 'strength', label: 'Strength Training' },
+          { value: 'weight_loss_body_toning', label: 'Weight Loss and Body Toning' },
         ] as { value: Goal; label: string }[]).map((option) => (
           <button
             key={option.value}

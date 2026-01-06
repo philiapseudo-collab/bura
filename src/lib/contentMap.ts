@@ -1,7 +1,7 @@
 // Content mapping logic for generating personalized plans
 // This will be expanded when client content is available
 
-type Goal = 'fat_loss' | 'muscle_building' | 'body_toning' | 'mobility' | 'strength' | 'general_fitness';
+type Goal = 'general_fitness' | 'strength' | 'weight_loss_body_toning';
 type TrainingLocation = 'home' | 'gym';
 type DaysAvailable = '2-3' | '3-4' | '4-5' | '5-6';
 type WorkoutSplit = 'full_body' | 'upper_lower' | 'push_pull_legs' | 'body_part_split';
@@ -20,12 +20,9 @@ export interface WorkoutSplitInfo {
 
 export function getPlanContent(goal: Goal, location: TrainingLocation): PlanContent {
   const goalTitles: Record<Goal, string> = {
-    fat_loss: 'Fat Loss Protocol',
-    muscle_building: 'Muscle Building Program',
-    body_toning: 'Body Toning Transformation',
-    mobility: 'Mobility & Flexibility',
-    strength: 'Strength Training Program',
     general_fitness: 'General Fitness Plan',
+    strength: 'Strength Training Program',
+    weight_loss_body_toning: 'Weight Loss and Body Toning',
   };
 
   const locationModifiers: Record<TrainingLocation, string> = {

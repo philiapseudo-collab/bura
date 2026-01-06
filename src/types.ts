@@ -1,7 +1,7 @@
 // Shared types for the Bura Fitness application
 
 export type Gender = 'male' | 'female';
-export type Goal = 'fat_loss' | 'muscle_building' | 'body_toning' | 'mobility' | 'strength' | 'general_fitness';
+export type Goal = 'general_fitness' | 'strength' | 'weight_loss_body_toning';
 export type ActivityLevel = 'beginner' | 'intermediate' | 'advanced';
 export type DaysAvailable = '2-3' | '3-4' | '4-5' | '5-6';
 export type TrainingLocation = 'home' | 'gym';
