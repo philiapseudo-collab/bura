@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { supabase } from '../../lib/supabase';
-import { sendPlanLink } from '../../lib/sms';
+// SMS sending removed - now using WhatsApp bridge flow
+// import { sendPlanLink } from '../../lib/sms';
 
 // Ensure this API route is not prerendered
 export const prerender = false;
@@ -117,16 +118,12 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    // Send SMS notification (fail-open strategy)
-    const smsResult = await sendPlanLink(body.phone, body.name, slug);
-    if (!smsResult.success) {
-      console.warn(`SMS notification failed for ${body.phone}:`, smsResult.error);
-      // Continue - don't block the response
-    }
+    // SMS sending removed - now using WhatsApp bridge flow
+    // The frontend handles redirecting to WhatsApp after successful save
 
-    // Return success with slug
+    // Return success (slug is still generated and saved to DB for reference, but not needed in response)
     return new Response(
-      JSON.stringify({ success: true, slug }),
+      JSON.stringify({ success: true }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
