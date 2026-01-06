@@ -248,24 +248,25 @@ export default function FitnessWizard() {
         const goalLabel = finalData.goal ? getGoalLabel(finalData.goal as Goal) : 'Not specified';
         const programLabel = finalData.selectedProgram ? getProgramLabel(finalData.selectedProgram as SelectedProgram) : 'Not specified';
 
-        // Construct the parts
-        const messageParts = [
-          "Hi Coach Bura! 👋",
-          "", // Blank line
-          "I just finished the fitness quiz. Here is my profile:",
-          "", // Blank line
-          `👤 *Name:* ${finalData.name}`,
-          `🎯 *Goal:* ${goalLabel}`,
-          `🔥 *Program:* ${programLabel}`,
-          `🏥 *Injuries:* ${finalData.hasInjuries ? 'Yes' : 'No'}`,
-          "", // Blank line
-          "I'm ready to start! What are the next steps?"
-        ];
-        // Join with newline character
-        const message = messageParts.join('\n');
+        // Nuclear Fix: Manually construct the URL to guarantee line breaks
+        // We encode each segment individually to handle spaces/emojis safely,
+        // then join them with %0A (the explicit code for a New Line).
 
-        // Encode properly
-        const whatsappUrl = `https://wa.me/${COACH_PHONE}?text=${encodeURIComponent(message)}`;
+        // 1. Prepare the segments (All safely encoded)
+        const intro = encodeURIComponent("Hi Coach Bura! 👋");
+        const profileHeader = encodeURIComponent("I just finished the fitness quiz. Here is my profile:");
+        const nameLine = encodeURIComponent(`👤 *Name:* ${finalData.name}`); // Encode entire line
+        const goalLine = encodeURIComponent(`🎯 *Goal:* ${goalLabel}`);
+        const programLine = encodeURIComponent(`🔥 *Program:* ${programLabel}`);
+        const injuryLine = encodeURIComponent(`🏥 *Injuries:* ${finalData.hasInjuries ? 'Yes' : 'No'}`);
+        const outro = encodeURIComponent("I'm ready to start! What are the next steps?");
+
+        // 2. Build the full text string using %0A for line breaks
+        // Structure: Intro -> (Blank Line) -> Header -> (Blank Line) -> Details -> (Blank Line) -> Outro
+        const text = `${intro}%0A%0A${profileHeader}%0A%0A${nameLine}%0A${goalLine}%0A${programLine}%0A${injuryLine}%0A%0A${outro}`;
+
+        // 3. Create final URL
+        const whatsappUrl = `https://wa.me/${COACH_PHONE}?text=${text}`;
         const successUrl = '/success?waLink=' + encodeURIComponent(whatsappUrl);
         window.location.href = successUrl;
       }
