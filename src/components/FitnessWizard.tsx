@@ -256,9 +256,10 @@ export default function FitnessWizard() {
 • Injured: ${injuriesText}
 I'm ready to start.`;
 
-        // Construct WhatsApp URL and redirect
+        // Construct WhatsApp URL and redirect to success page
         const whatsappUrl = `https://wa.me/${COACH_PHONE}?text=${encodeURIComponent(whatsappMessage)}`;
-        window.location.href = whatsappUrl;
+        const successUrl = '/success?waLink=' + encodeURIComponent(whatsappUrl);
+        window.location.href = successUrl;
       }
     }
   };
@@ -593,7 +594,7 @@ I'm ready to start.`;
 
       {/* Phone */}
       <div>
-        <label className="block text-sm font-medium mb-3">Phone Number</label>
+        <label className="block text-sm font-medium mb-3">WhatsApp Number</label>
         <input
           type="tel"
           value={formData.phone}
