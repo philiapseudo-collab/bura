@@ -4,7 +4,7 @@ type Gender = 'male' | 'female';
 type Goal = 'general_fitness' | 'strength' | 'weight_loss_body_toning';
 type ActivityLevel = 'beginner' | 'intermediate' | 'advanced';
 type DaysAvailable = '2-3' | '3-4' | '4-5' | '5-6';
-type PreferredMethod = 'home_workouts' | 'gym_training' | 'calisthenics';
+type PreferredMethod = 'home_workouts' | 'gym_training';
 type CommitmentLevel = 'low' | 'medium' | 'high';
 type SelectedProgram = '21_day_abs' | '12_week_muscle' | 'strength_training';
 
@@ -450,7 +450,6 @@ I'm ready to start.`;
         {([
           { value: 'home_workouts', label: 'Home Workouts' },
           { value: 'gym_training', label: 'Gym Training' },
-          { value: 'calisthenics', label: 'Calisthenics' },
         ] as { value: PreferredMethod; label: string }[]).map((option) => (
           <button
             key={option.value}

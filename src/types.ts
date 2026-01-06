@@ -8,7 +8,7 @@ export type TrainingLocation = 'home' | 'gym';
 export type Equipment = 'dumbbells' | 'bands' | 'bodyweight';
 
 // New field types for updated wizard flow
-export type PreferredMethod = 'home_workouts' | 'gym_training' | 'calisthenics';
+export type PreferredMethod = 'home_workouts' | 'gym_training';
 export type CommitmentLevel = 'low' | 'medium' | 'high';
 export type SelectedProgram = '21_day_abs' | '12_week_muscle' | 'strength_training';
 

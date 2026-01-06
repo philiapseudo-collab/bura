@@ -89,7 +89,7 @@ function mapToLegacyFormat(profile: UserProfile): UserProfile {
     if (profile.preferredMethod === 'gym_training') {
       trainingLocation = 'gym';
     } else {
-      // home_workouts or calisthenics both map to 'home'
+      // home_workouts maps to 'home'
       trainingLocation = 'home';
     }
   } else {
