@@ -4,8 +4,9 @@ type Gender = 'male' | 'female';
 type Goal = 'fat_loss' | 'muscle_building' | 'body_toning' | 'mobility' | 'strength' | 'general_fitness';
 type ActivityLevel = 'beginner' | 'intermediate' | 'advanced';
 type DaysAvailable = '2-3' | '3-4' | '4-5' | '5-6';
-type TrainingLocation = 'home' | 'gym';
-type Equipment = 'dumbbells' | 'bands' | 'bodyweight';
+type PreferredMethod = 'home_workouts' | 'gym_training' | 'calisthenics';
+type CommitmentLevel = 'low' | 'medium' | 'high';
+type SelectedProgram = '21_day_abs' | '12_week_muscle' | 'strength_training';
 
 interface FormData {
   // Step 0: Body Stats
@@ -23,21 +24,30 @@ interface FormData {
   // Step 3: Availability
   daysAvailable: DaysAvailable | '';
   
-  // Step 4: Location
-  trainingLocation: TrainingLocation | '';
+  // Step 4: History
+  hasUsedTrainer: boolean | null;
   
-  // Step 5: Equipment (conditional)
-  equipment: Equipment[];
+  // Step 5: Method
+  preferredMethod: PreferredMethod | '';
   
   // Step 6: Medical
   hasInjuries: boolean | null;
   
-  // Step 7: Contact
+  // Step 7: Equipment
+  hasEquipment: boolean | null;
+  
+  // Step 8: Commitment
+  commitmentLevel: CommitmentLevel | '';
+  
+  // Step 9: Program Selection
+  selectedProgram: SelectedProgram | '';
+  
+  // Step 10: Contact
   name: string;
   phone: string;
 }
 
-const TOTAL_STEPS = 8; // 0-7
+const TOTAL_STEPS = 11; // 0-10
 
 export default function FitnessWizard() {
   const [currentStep, setCurrentStep] = useState(0);
@@ -50,9 +60,12 @@ export default function FitnessWizard() {
     goal: '',
     activityLevel: '',
     daysAvailable: '',
-    trainingLocation: '',
-    equipment: [],
+    hasUsedTrainer: null,
+    preferredMethod: '',
     hasInjuries: null,
+    hasEquipment: null,
+    commitmentLevel: '',
+    selectedProgram: '',
     name: '',
     phone: '',
   });
@@ -121,16 +134,19 @@ export default function FitnessWizard() {
         return formData.activityLevel !== '';
       case 3: // Availability
         return formData.daysAvailable !== '';
-      case 4: // Location
-        return formData.trainingLocation !== '';
-      case 5: // Equipment (only if home)
-        if (formData.trainingLocation === 'home') {
-          return formData.equipment.length > 0;
-        }
-        return true; // Skip if gym
+      case 4: // History
+        return formData.hasUsedTrainer !== null;
+      case 5: // Method
+        return formData.preferredMethod !== '';
       case 6: // Medical
         return formData.hasInjuries !== null;
-      case 7: // Contact
+      case 7: // Equipment
+        return formData.hasEquipment !== null;
+      case 8: // Commitment
+        return formData.commitmentLevel !== '';
+      case 9: // Program Selection
+        return formData.selectedProgram !== '';
+      case 10: // Contact
         return formData.name.trim() !== '' && 
                formData.phone !== '' && 
                phoneError === '';
@@ -142,10 +158,7 @@ export default function FitnessWizard() {
   const handleNext = () => {
     if (canProceed()) {
       setDirection('right');
-      // Skip equipment step if location is gym
-      if (currentStep === 4 && formData.trainingLocation === 'gym') {
-        setCurrentStep(prev => prev + 2);
-      } else if (currentStep < TOTAL_STEPS - 1) {
+      if (currentStep < TOTAL_STEPS - 1) {
         setCurrentStep(prev => prev + 1);
       } else {
         // Final submit
@@ -157,12 +170,7 @@ export default function FitnessWizard() {
   const handleBack = () => {
     if (currentStep > 0) {
       setDirection('left');
-      // Skip back over equipment step if location is gym
-      if (currentStep === 6 && formData.trainingLocation === 'gym') {
-        setCurrentStep(prev => prev - 2);
-      } else {
-        setCurrentStep(prev => prev - 1);
-      }
+      setCurrentStep(prev => prev - 1);
     }
   };
 
@@ -195,9 +203,12 @@ export default function FitnessWizard() {
                 goal: finalData.goal,
                 activityLevel: finalData.activityLevel,
                 daysAvailable: finalData.daysAvailable,
-                trainingLocation: finalData.trainingLocation,
-                equipment: finalData.equipment,
+                hasUsedTrainer: finalData.hasUsedTrainer,
+                preferredMethod: finalData.preferredMethod,
                 hasInjuries: finalData.hasInjuries,
+                hasEquipment: finalData.hasEquipment,
+                commitmentLevel: finalData.commitmentLevel,
+                selectedProgram: finalData.selectedProgram,
               },
             }),
           });
@@ -219,14 +230,6 @@ export default function FitnessWizard() {
     }
   };
 
-  const toggleEquipment = (equipment: Equipment) => {
-    setFormData(prev => ({
-      ...prev,
-      equipment: prev.equipment.includes(equipment)
-        ? prev.equipment.filter(e => e !== equipment)
-        : [...prev.equipment, equipment]
-    }));
-  };
 
   // Step 0: Body Stats
   const renderBodyStats = () => (
@@ -383,28 +386,21 @@ export default function FitnessWizard() {
     </div>
   );
 
-  // Step 4: Location
-  const renderLocation = () => (
+  // Step 4: History
+  const renderHistory = () => (
     <div className="space-y-3">
-      <h2 className="text-2xl font-bold text-center mb-6">Preferred Training Method?</h2>
+      <h2 className="text-2xl font-bold text-center mb-6">Have you had a personal trainer before?</h2>
       <div className="space-y-3">
         {([
-          { value: 'home', label: 'Home' },
-          { value: 'gym', label: 'Gym' },
-        ] as { value: TrainingLocation; label: string }[]).map((option) => (
+          { value: true, label: 'Yes' },
+          { value: false, label: 'No' },
+        ]).map((option) => (
           <button
-            key={option.value}
+            key={option.label}
             type="button"
-            onClick={() => {
-              setFormData(prev => ({ 
-                ...prev, 
-                trainingLocation: option.value,
-                // Clear equipment if switching to gym
-                equipment: option.value === 'gym' ? [] : prev.equipment
-              }));
-            }}
+            onClick={() => setFormData(prev => ({ ...prev, hasUsedTrainer: option.value }))}
             className={`w-full min-h-[48px] rounded-lg font-bold transition-all ${
-              formData.trainingLocation === option.value
+              formData.hasUsedTrainer === option.value
                 ? 'bg-bura-green text-bura-black'
                 : 'bg-bura-gray text-gray-200'
             }`}
@@ -416,22 +412,22 @@ export default function FitnessWizard() {
     </div>
   );
 
-  // Step 5: Equipment
-  const renderEquipment = () => (
+  // Step 5: Method
+  const renderMethod = () => (
     <div className="space-y-3">
-      <h2 className="text-2xl font-bold text-center mb-6">What equipment do you have?</h2>
+      <h2 className="text-2xl font-bold text-center mb-6">Preferred training method?</h2>
       <div className="space-y-3">
         {([
-          { value: 'dumbbells', label: 'Dumbbells' },
-          { value: 'bands', label: 'Resistance Bands' },
-          { value: 'bodyweight', label: 'Bodyweight Only' },
-        ] as { value: Equipment; label: string }[]).map((option) => (
+          { value: 'home_workouts', label: 'Home Workouts' },
+          { value: 'gym_training', label: 'Gym Training' },
+          { value: 'calisthenics', label: 'Calisthenics' },
+        ] as { value: PreferredMethod; label: string }[]).map((option) => (
           <button
             key={option.value}
             type="button"
-            onClick={() => toggleEquipment(option.value)}
+            onClick={() => setFormData(prev => ({ ...prev, preferredMethod: option.value }))}
             className={`w-full min-h-[48px] rounded-lg font-bold transition-all ${
-              formData.equipment.includes(option.value)
+              formData.preferredMethod === option.value
                 ? 'bg-bura-green text-bura-black'
                 : 'bg-bura-gray text-gray-200'
             }`}
@@ -469,7 +465,88 @@ export default function FitnessWizard() {
     </div>
   );
 
-  // Step 7: Contact
+  // Step 7: Equipment
+  const renderEquipment = () => (
+    <div className="space-y-3">
+      <h2 className="text-2xl font-bold text-center mb-6">Do you have training equipment?</h2>
+      <div className="space-y-3">
+        {([
+          { value: true, label: 'Yes' },
+          { value: false, label: 'No' },
+        ]).map((option) => (
+          <button
+            key={option.label}
+            type="button"
+            onClick={() => setFormData(prev => ({ ...prev, hasEquipment: option.value }))}
+            className={`w-full min-h-[48px] rounded-lg font-bold transition-all ${
+              formData.hasEquipment === option.value
+                ? 'bg-bura-green text-bura-black'
+                : 'bg-bura-gray text-gray-200'
+            }`}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
+  // Step 8: Commitment
+  const renderCommitment = () => (
+    <div className="space-y-3">
+      <h2 className="text-2xl font-bold text-center mb-6">How serious are you?</h2>
+      <div className="space-y-3">
+        {([
+          { value: 'low', label: 'Just Curious' },
+          { value: 'medium', label: 'Ready to Start' },
+          { value: 'high', label: 'I will do whatever it takes' },
+        ] as { value: CommitmentLevel; label: string }[]).map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            onClick={() => setFormData(prev => ({ ...prev, commitmentLevel: option.value }))}
+            className={`w-full min-h-[48px] rounded-lg font-bold transition-all ${
+              formData.commitmentLevel === option.value
+                ? 'bg-bura-green text-bura-black'
+                : 'bg-bura-gray text-gray-200'
+            }`}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
+  // Step 9: Program Selection
+  const renderProgramSelection = () => (
+    <div className="space-y-4">
+      <h2 className="text-2xl font-bold text-center mb-6">Choose your program</h2>
+      <div className="space-y-3">
+        {([
+          { value: '21_day_abs', title: '21 Days Abs Challenge', subtitle: 'Beginner Friendly' },
+          { value: '12_week_muscle', title: '12 Week Muscle Building Program', subtitle: 'Intermediate' },
+          { value: 'strength_training', title: 'Strength Training Workout', subtitle: 'Advanced' },
+        ] as { value: SelectedProgram; title: string; subtitle: string }[]).map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            onClick={() => setFormData(prev => ({ ...prev, selectedProgram: option.value }))}
+            className={`w-full p-5 rounded-lg border-2 transition-all text-left ${
+              formData.selectedProgram === option.value
+                ? 'border-bura-green bg-bura-green/10'
+                : 'border-gray-700 bg-gray-800'
+            }`}
+          >
+            <div className="font-bold text-lg mb-1">{option.title}</div>
+            <div className="text-sm text-gray-400">{option.subtitle}</div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
+  // Step 10: Contact
   const renderContact = () => (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-center mb-6">Almost there! Share your details</h2>
@@ -517,36 +594,31 @@ export default function FitnessWizard() {
       case 3:
         return renderAvailability();
       case 4:
-        return renderLocation();
+        return renderHistory();
       case 5:
-        return renderEquipment();
+        return renderMethod();
       case 6:
         return renderMedical();
       case 7:
+        return renderEquipment();
+      case 8:
+        return renderCommitment();
+      case 9:
+        return renderProgramSelection();
+      case 10:
         return renderContact();
       default:
         return null;
     }
   };
 
-  // Calculate actual step number for display (accounting for skipped equipment step)
+  // Calculate step number for display (linear flow, no skipping)
   const getDisplayStep = () => {
-    // Steps 0-4 are always shown (Body Stats, Goal, Activity, Availability, Location)
-    if (currentStep <= 4) return currentStep + 1;
-    
-    // If gym is selected, equipment step (5) is skipped
-    if (formData.trainingLocation === 'gym') {
-      // currentStep 6 (Medical) displays as step 6
-      // currentStep 7 (Contact) displays as step 7
-      return currentStep;
-    }
-    
-    // If home is selected, all steps are shown
     return currentStep + 1;
   };
 
   const getTotalSteps = () => {
-    return formData.trainingLocation === 'gym' ? TOTAL_STEPS - 1 : TOTAL_STEPS;
+    return TOTAL_STEPS;
   };
 
   return (

@@ -1,6 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { getPlanContent, getScheduleDays, getWorkoutPlaceholder } from '../../lib/contentMap';
+import { getPlanContent, getScheduleDays, getWorkoutForDay, getWorkoutSplit, getAvailableEquipment } from '../../lib/contentMap';
 import { supabase } from '../../lib/supabase';
 import type { UserProfile } from '../../types';
 
@@ -18,15 +18,21 @@ const mockUserProfile: UserProfile = {
   name: 'Demo User',
   goal: 'fat_loss',
   activityLevel: 'beginner',
-  trainingLocation: 'home',
   daysAvailable: '2-3',
+  hasUsedTrainer: false,
+  preferredMethod: 'home_workouts',
   hasInjuries: false,
+  hasEquipment: true,
+  commitmentLevel: 'medium',
+  selectedProgram: '21_day_abs',
   age: 25,
   gender: 'male',
   height: 175,
   weight: 75,
-  equipment: ['dumbbells', 'bodyweight'],
   phone: '+254700000000',
+  // Legacy fields for compatibility
+  trainingLocation: 'home',
+  equipment: ['dumbbells', 'bodyweight'],
 };
 
 let userData: UserProfile = mockUserProfile;
@@ -69,23 +75,134 @@ if (!isDemo && id) {
   }
 }
 
-// Calculate Fitness Score based on activity level
-function calculateFitnessScore(activityLevel: string): number {
-  switch (activityLevel) {
-    case 'beginner':
-      return 45;
-    case 'intermediate':
-      return 68;
-    case 'advanced':
-      return 82;
-    default:
-      return 45;
+// Compatibility mapping layer: Convert new fields to old fields for backward compatibility
+// This allows contentMap.ts to continue working without changes
+function mapToLegacyFormat(profile: UserProfile): UserProfile {
+  // If legacy fields already exist, use them (backward compatibility with old data)
+  if (profile.trainingLocation !== undefined && profile.equipment !== undefined) {
+    return profile;
   }
+
+  // Map preferredMethod -> trainingLocation
+  let trainingLocation: 'home' | 'gym' = 'home';
+  if (profile.preferredMethod) {
+    if (profile.preferredMethod === 'gym_training') {
+      trainingLocation = 'gym';
+    } else {
+      // home_workouts or calisthenics both map to 'home'
+      trainingLocation = 'home';
+    }
+  } else {
+    // Fallback if preferredMethod doesn't exist (shouldn't happen with new data)
+    trainingLocation = 'home';
+  }
+
+  // Map hasEquipment -> equipment array
+  let equipment: ('dumbbells' | 'bands' | 'bodyweight')[] = [];
+  if (profile.hasEquipment !== undefined) {
+    if (profile.hasEquipment === true) {
+      // If they have equipment, default to basic home equipment
+      equipment = ['dumbbells', 'bands'];
+    } else {
+      // If no equipment, bodyweight only
+      equipment = ['bodyweight'];
+    }
+  } else {
+    // Fallback if hasEquipment doesn't exist
+    equipment = ['bodyweight'];
+  }
+
+  // Return profile with legacy fields added
+  return {
+    ...profile,
+    trainingLocation,
+    equipment,
+  };
 }
 
-const fitnessScore = calculateFitnessScore(userData.activityLevel);
+// Apply compatibility mapping
+userData = mapToLegacyFormat(userData);
+
+// Calculate Bura Score based on comprehensive user profile
+function calculateBuraScore(profile: UserProfile): { score: number; message: string; color: string } {
+  // Start with base score of 50
+  let score = 50;
+
+  // Calculate BMI (handle edge case where height might be 0)
+  let bmi = 0;
+  if (profile.height > 0) {
+    const heightInMeters = profile.height / 100;
+    bmi = profile.weight / (heightInMeters * heightInMeters);
+  }
+
+  // Apply BMI Bonus
+  if (bmi >= 18.5 && bmi < 25) {
+    // Healthy range: 18.5 - 24.9
+    score += 15;
+  } else if (bmi >= 25 && bmi < 30) {
+    // Overweight: 25 - 29.9
+    score += 5;
+  } else if (bmi >= 30) {
+    // Obese: ≥ 30
+    score -= 5;
+  }
+  // BMI < 18.5 (Underweight): +0 (neutral, no change)
+
+  // Apply Activity Bonus
+  switch (profile.activityLevel) {
+    case 'beginner':
+      score += 0;
+      break;
+    case 'intermediate':
+      score += 10;
+      break;
+    case 'advanced':
+      score += 20;
+      break;
+  }
+
+  // Apply Commitment Bonus
+  switch (profile.daysAvailable) {
+    case '2-3':
+      score += 0;
+      break;
+    case '3-4':
+      score += 5;
+      break;
+    case '4-5':
+      score += 8;
+      break;
+    case '5-6':
+      score += 10;
+      break;
+  }
+
+  // Clamp score between 0 and 100
+  score = Math.max(0, Math.min(100, Math.round(score)));
+
+  // Determine message and color based on score range
+  let message: string;
+  let color: string;
+
+  if (score < 50) {
+    message = "Let's build your foundation.";
+    color = "text-orange-500";
+  } else if (score >= 50 && score <= 79) {
+    message = "Solid start. Let's optimize.";
+    color = "text-bura-green";
+  } else {
+    // score >= 80
+    message = "Elite Potential. Push harder.";
+    color = "text-purple-400";
+  }
+
+  return { score, message, color };
+}
+
+const scoreResult = calculateBuraScore(userData);
 const planContent = getPlanContent(userData.goal, userData.trainingLocation);
 const scheduleDays = getScheduleDays(userData.daysAvailable);
+const workoutSplit = getWorkoutSplit(userData.daysAvailable);
 ---
 
 <Layout title={`${userData.name}'s Fitness Plan - Bura Fitness`}>
@@ -105,46 +222,32 @@ const scheduleDays = getScheduleDays(userData.daysAvailable);
       <div class="mb-8 bg-bura-gray rounded-xl p-6 border border-gray-700">
         <div class="text-center">
           <p class="text-sm text-gray-400 mb-2">Your Starting Bura Score</p>
-          <div class="text-5xl font-bold text-bura-green mb-2">
-            {fitnessScore}/100
+          <div class="text-5xl font-bold mb-2">
+            <span class={scoreResult.color}>{scoreResult.score}</span>
+            <span class="text-gray-500 text-3xl">/100</span>
           </div>
+          <p class={`text-sm font-medium mb-1 ${scoreResult.color}`}>
+            {scoreResult.message}
+          </p>
           <p class="text-xs text-gray-500">
-            Based on your current activity level
+            Based on your profile
           </p>
         </div>
       </div>
 
-      {/* Video Section - Thumbnail Placeholder */}
-      <div class="mb-8">
-        <h2 class="text-xl font-bold mb-4">Featured Workout</h2>
-        <div 
-          class="relative bg-gray-800 rounded-lg overflow-hidden aspect-video flex items-center justify-center cursor-pointer group"
-          role="button"
-          tabindex="0"
-        >
-          {/* Placeholder Background */}
-          <div class="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900"></div>
-          
-          {/* Play Icon */}
-          <div class="relative z-10 flex items-center justify-center">
-            <svg 
-              class="w-16 h-16 text-bura-green group-hover:scale-110 transition-transform" 
-              fill="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path d="M8 5v14l11-7z"/>
-            </svg>
-          </div>
-          
-          {/* Overlay Text */}
-          <div class="absolute bottom-4 left-4 right-4 text-center">
-            <p class="text-sm text-gray-300">Click to watch workout video</p>
+      {/* Workout Split Info */}
+      <div class="mb-6 bg-bura-gray rounded-xl p-4 border border-gray-700">
+        <div class="flex items-start justify-between">
+          <div class="flex-1">
+            <h3 class="text-sm font-medium text-gray-400 mb-1">Training Split</h3>
+            <p class="text-lg font-bold text-bura-green mb-1">{workoutSplit.name}</p>
+            <p class="text-xs text-gray-500">{workoutSplit.description}</p>
           </div>
         </div>
       </div>
 
       {/* Schedule List */}
-      <div class="mb-8">
+      <div class="mb-6">
         <h2 class="text-xl font-bold mb-4">Your Weekly Schedule</h2>
         <div class="space-y-3">
           {scheduleDays.map((day, index) => (
@@ -156,7 +259,7 @@ const scheduleDays = getScheduleDays(userData.daysAvailable);
                 <div>
                   <h3 class="font-bold text-lg mb-1">{day}</h3>
                   <p class="text-sm text-gray-400">
-                    Day {index + 1}: {getWorkoutPlaceholder(index, userData.daysAvailable)}
+                    Day {index + 1}: {getWorkoutForDay(index, userData.daysAvailable, workoutSplit.type, userData.trainingLocation, userData.equipment)}
                   </p>
                 </div>
                 <div class="text-bura-green">
@@ -167,6 +270,31 @@ const scheduleDays = getScheduleDays(userData.daysAvailable);
               </div>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Equipment Info */}
+      <div class="mb-8 bg-bura-gray rounded-xl p-4 border border-gray-700">
+        <div class="flex items-start justify-between">
+          <div class="flex-1">
+            <h3 class="text-sm font-medium text-gray-400 mb-2">Available Equipment</h3>
+            {userData.trainingLocation === 'home' ? (
+              <>
+                {(userData.hasEquipment === false || (userData.equipment && userData.equipment.length === 1 && userData.equipment[0] === 'bodyweight')) ? (
+                  <p class="text-sm text-gray-400 mb-2">Bodyweight</p>
+                ) : (
+                  <p class="text-sm text-gray-400 mb-2">Basic Home Equipment (Dumbbells/Bands)</p>
+                )}
+                <p class="text-xs text-gray-500">
+                  Gym machines filtered out for home workouts
+                </p>
+              </>
+            ) : (
+              <p class="text-sm text-gray-400">
+                Full gym access - all equipment available
+              </p>
+            )}
+          </div>
         </div>
       </div>
 
