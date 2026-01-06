@@ -4,33 +4,44 @@ import Layout from '../layouts/Layout.astro';
 // Disable prerendering for this dynamic route
 export const prerender = false;
 
-// Get WhatsApp link from query parameters
-let waLink = Astro.url.searchParams.get('waLink');
+// Get WhatsApp parameters - support both old (waLink) and new (phone + text) formats
+let finalWaLink: string | null = null;
 
-// If waLink is not found, try getting it from the URL directly (in case of encoding issues)
-if (!waLink) {
-  const urlString = Astro.url.href;
-  const waLinkMatch = urlString.match(/[?&]waLink=([^&]+)/);
-  if (waLinkMatch) {
-    waLink = decodeURIComponent(waLinkMatch[1]);
+const phone = Astro.url.searchParams.get('phone');
+const text = Astro.url.searchParams.get('text');
+
+if (phone && text) {
+  // New approach: construct URL from separate parameters (avoids double-encoding issues)
+  // The text parameter already has %0A codes for newlines, use it directly
+  finalWaLink = `https://wa.me/${phone}?text=${text}`;
+} else {
+  // Fallback to old approach for backward compatibility
+  let waLink = Astro.url.searchParams.get('waLink');
+  
+  // If waLink is not found, try getting it from the URL directly (in case of encoding issues)
+  if (!waLink) {
+    const urlString = Astro.url.href;
+    const waLinkMatch = urlString.match(/[?&]waLink=([^&]+)/);
+    if (waLinkMatch) {
+      waLink = decodeURIComponent(waLinkMatch[1]);
+    }
+  }
+  
+  if (waLink) {
+    // Decode the waLink if it's still encoded
+    const decodedWaLink = decodeURIComponent(waLink);
+    
+    // Ensure waLink is a valid WhatsApp URL
+    if (decodedWaLink.startsWith('https://wa.me/') || waLink.startsWith('https://wa.me/')) {
+      finalWaLink = decodedWaLink;
+    }
   }
 }
 
-// Redirect to home if no waLink provided
-if (!waLink || waLink.trim() === '') {
+// Redirect to home if no valid WhatsApp link
+if (!finalWaLink || finalWaLink.trim() === '') {
   return Astro.redirect('/');
 }
-
-// Decode the waLink if it's still encoded
-const decodedWaLink = decodeURIComponent(waLink);
-
-// Ensure waLink is a valid WhatsApp URL (check both encoded and decoded)
-if (!decodedWaLink.startsWith('https://wa.me/') && !waLink.startsWith('https://wa.me/')) {
-  return Astro.redirect('/');
-}
-
-// Use the decoded version
-const finalWaLink = decodedWaLink;
 ---
 
 <Layout title="You're Almost There! - Bura Fitness">

@@ -248,26 +248,30 @@ export default function FitnessWizard() {
         const goalLabel = finalData.goal ? getGoalLabel(finalData.goal as Goal) : 'Not specified';
         const programLabel = finalData.selectedProgram ? getProgramLabel(finalData.selectedProgram as SelectedProgram) : 'Not specified';
 
-        // Nuclear Fix: Manually construct the URL to guarantee line breaks
-        // We encode each segment individually to handle spaces/emojis safely,
-        // then join them with %0A (the explicit code for a New Line).
+        // Nuclear Fix: Build message with explicit \n characters, then force %0A encoding
+        // This ensures WhatsApp receives explicit line break codes that won't be stripped
+        
+        // 1. Build the complete message with explicit newline characters (\n)
+        const message = "Hi Coach Bura! 👋\n\n" +
+          "I just finished the fitness quiz. Here is my profile:\n\n" +
+          `👤 *Name:* ${finalData.name}\n` +
+          `🎯 *Goal:* ${goalLabel}\n` +
+          `🔥 *Program:* ${programLabel}\n` +
+          `🏥 *Injuries:* ${finalData.hasInjuries ? 'Yes' : 'No'}\n\n` +
+          "I'm ready to start! What are the next steps?";
 
-        // 1. Prepare the segments (All safely encoded)
-        const intro = encodeURIComponent("Hi Coach Bura! 👋");
-        const profileHeader = encodeURIComponent("I just finished the fitness quiz. Here is my profile:");
-        const nameLine = encodeURIComponent(`👤 *Name:* ${finalData.name}`); // Encode entire line
-        const goalLine = encodeURIComponent(`🎯 *Goal:* ${goalLabel}`);
-        const programLine = encodeURIComponent(`🔥 *Program:* ${programLabel}`);
-        const injuryLine = encodeURIComponent(`🏥 *Injuries:* ${finalData.hasInjuries ? 'Yes' : 'No'}`);
-        const outro = encodeURIComponent("I'm ready to start! What are the next steps?");
-
-        // 2. Build the full text string using %0A for line breaks
-        // Structure: Intro -> (Blank Line) -> Header -> (Blank Line) -> Details -> (Blank Line) -> Outro
-        const text = `${intro}%0A%0A${profileHeader}%0A%0A${nameLine}%0A${goalLine}%0A${programLine}%0A${injuryLine}%0A%0A${outro}`;
-
-        // 3. Create final URL
-        const whatsappUrl = `https://wa.me/${COACH_PHONE}?text=${text}`;
-        const successUrl = '/success?waLink=' + encodeURIComponent(whatsappUrl);
+        // 2. Encode the entire message
+        let encodedMessage = encodeURIComponent(message);
+        
+        // 3. Force newlines to be %0A (replace any encoded newline variations)
+        // encodeURIComponent converts \n to %0A, but we ensure it's exactly %0A
+        encodedMessage = encodedMessage.replace(/%0D%0A/g, '%0A'); // Replace \r\n with \n
+        encodedMessage = encodedMessage.replace(/%0D/g, '%0A'); // Replace \r with \n
+        
+        // 4. Pass encoded message to success page, which will construct the URL
+        // This avoids double-encoding the %0A codes
+        // The success page will build: https://wa.me/COACH_PHONE?text=encodedMessage
+        const successUrl = `/success?phone=${COACH_PHONE}&text=${encodedMessage}`;
         window.location.href = successUrl;
       }
     }
