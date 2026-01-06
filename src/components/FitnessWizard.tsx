@@ -553,10 +553,10 @@ I'm ready to start.`;
       <h2 className="text-2xl font-bold text-center mb-6">Choose your program</h2>
       <div className="space-y-3">
         {([
-          { value: '21_day_abs', title: '21 Days Abs Challenge', subtitle: 'Beginner Friendly' },
-          { value: '12_week_muscle', title: '12 Week Muscle Building Program', subtitle: 'Intermediate' },
-          { value: 'strength_training', title: 'Strength Training Workout', subtitle: 'Advanced' },
-        ] as { value: SelectedProgram; title: string; subtitle: string }[]).map((option) => (
+          { value: '21_day_abs', title: '21 Days Abs Challenge' },
+          { value: '12_week_muscle', title: '12 Week Muscle Building Program' },
+          { value: 'strength_training', title: 'Strength Training Workout' },
+        ] as { value: SelectedProgram; title: string }[]).map((option) => (
           <button
             key={option.value}
             type="button"
@@ -567,8 +567,7 @@ I'm ready to start.`;
                 : 'border-gray-700 bg-gray-800'
             }`}
           >
-            <div className="font-bold text-lg mb-1">{option.title}</div>
-            <div className="text-sm text-gray-400">{option.subtitle}</div>
+            <div className="font-bold text-lg">{option.title}</div>
           </button>
         ))}
       </div>
