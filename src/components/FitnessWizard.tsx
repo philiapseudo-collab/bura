@@ -247,14 +247,16 @@ export default function FitnessWizard() {
         // Build WhatsApp message with human-readable labels
         const goalLabel = finalData.goal ? getGoalLabel(finalData.goal as Goal) : 'Not specified';
         const programLabel = finalData.selectedProgram ? getProgramLabel(finalData.selectedProgram as SelectedProgram) : 'Not specified';
-        const injuriesText = finalData.hasInjuries === true ? 'Yes' : 'No';
 
-        const whatsappMessage = `Hi Coach! I just finished the quiz.
-• Name: ${finalData.name}
-• Goal: ${goalLabel}
-• Program Interest: ${programLabel}
-• Injured: ${injuriesText}
-I'm ready to start.`;
+        const whatsappMessage = `Hi Coach Bura! 👋
+I just finished the fitness quiz. Here is my profile:
+
+👤 Name: ${finalData.name}
+🎯 Goal: ${goalLabel}
+🔥 Program: ${programLabel}
+🏥 Injuries: ${finalData.hasInjuries ? 'Yes' : 'No'}
+
+I'm ready to start! What are the next steps?`;
 
         // Construct WhatsApp URL and redirect to success page
         const whatsappUrl = `https://wa.me/${COACH_PHONE}?text=${encodeURIComponent(whatsappMessage)}`;
