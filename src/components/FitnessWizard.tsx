@@ -23,7 +23,7 @@ function getGoalLabel(goal: Goal): string {
 
 function getProgramLabel(program: SelectedProgram): string {
   const labels: Record<SelectedProgram, string> = {
-    '21_day_abs': '21 Days Abs Challenge',
+    '21_day_abs': '21 Days Belly Fat Burner',
     '12_week_muscle': '12 Week Muscle Building Program',
     'strength_training': 'Strength Training Workout',
   };
@@ -569,7 +569,7 @@ export default function FitnessWizard() {
       <h2 className="text-2xl font-bold text-center mb-6">Choose your program</h2>
       <div className="space-y-3">
         {([
-          { value: '21_day_abs', title: '21 Days Abs Challenge' },
+          { value: '21_day_abs', title: '21 Days Belly Fat Burner' },
           { value: '12_week_muscle', title: '12 Week Muscle Building Program' },
           { value: 'strength_training', title: 'Strength Training Workout' },
         ] as { value: SelectedProgram; title: string }[]).map((option) => (
