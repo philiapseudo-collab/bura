@@ -1,9 +1,11 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import FitnessWizard from '../components/FitnessWizard';
+
+const pageDescription = "Get personalized fitness plans designed for Kenyans. Transform your body with custom workout programs, expert coaching, and proven results. Start your fitness journey today.";
 ---
 
-<Layout title="Get Fit With Bura - Transform Your Body">
+<Layout title="Get Fit With Bura - Transform Your Body" description={pageDescription}>
 	<!-- Hero Section -->
 	<section class="min-h-[80vh] bg-bura-black flex items-center justify-center px-4">
 		<div class="max-w-md mx-auto text-center space-y-8">
