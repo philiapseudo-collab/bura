@@ -30,6 +30,42 @@ function getProgramLabel(program: SelectedProgram): string {
   return labels[program] || program;
 }
 
+function getActivityLevelLabel(level: ActivityLevel): string {
+  const labels: Record<ActivityLevel, string> = {
+    beginner: 'Beginner',
+    intermediate: 'Intermediate',
+    advanced: 'Advanced',
+  };
+  return labels[level] || level;
+}
+
+function getDaysAvailableLabel(days: DaysAvailable): string {
+  const labels: Record<DaysAvailable, string> = {
+    '2-3': '2-3 days',
+    '3-4': '3-4 days',
+    '4-5': '4-5 days',
+    '5-6': '5-6 days',
+  };
+  return labels[days] || days;
+}
+
+function getPreferredMethodLabel(method: PreferredMethod): string {
+  const labels: Record<PreferredMethod, string> = {
+    home_workouts: 'Home Workouts',
+    gym_training: 'Gym Training',
+  };
+  return labels[method] || method;
+}
+
+function getCommitmentLevelLabel(level: CommitmentLevel): string {
+  const labels: Record<CommitmentLevel, string> = {
+    low: 'Just Curious',
+    medium: 'Ready to Start',
+    high: 'I will do whatever it takes',
+  };
+  return labels[level] || level;
+}
+
 interface FormData {
   // Step 0: Body Stats
   gender: Gender | '';
@@ -247,6 +283,10 @@ export default function FitnessWizard() {
         // Build WhatsApp message with human-readable labels
         const goalLabel = finalData.goal ? getGoalLabel(finalData.goal as Goal) : 'Not specified';
         const programLabel = finalData.selectedProgram ? getProgramLabel(finalData.selectedProgram as SelectedProgram) : 'Not specified';
+        const activityLabel = finalData.activityLevel ? getActivityLevelLabel(finalData.activityLevel as ActivityLevel) : 'Not specified';
+        const daysLabel = finalData.daysAvailable ? getDaysAvailableLabel(finalData.daysAvailable as DaysAvailable) : 'Not specified';
+        const methodLabel = finalData.preferredMethod ? getPreferredMethodLabel(finalData.preferredMethod as PreferredMethod) : 'Not specified';
+        const commitmentLabel = finalData.commitmentLevel ? getCommitmentLevelLabel(finalData.commitmentLevel as CommitmentLevel) : 'Not specified';
 
         // Nuclear Fix: Build message with explicit \n characters, then force %0A encoding
         // This ensures WhatsApp receives explicit line break codes that won't be stripped
@@ -254,10 +294,20 @@ export default function FitnessWizard() {
         // 1. Build the complete message with explicit newline characters (\n)
         const message = "Hi Coach Bura! 👋\n\n" +
           "I just finished the fitness quiz. Here is my profile:\n\n" +
+          // Basic Info
           `👤 *Name:* ${finalData.name}\n` +
+          // Fitness Goals & Program
           `🎯 *Goal:* ${goalLabel}\n` +
           `🔥 *Program:* ${programLabel}\n` +
-          `🏥 *Injuries:* ${finalData.hasInjuries ? 'Yes' : 'No'}\n\n` +
+          // Activity & Availability
+          `💪 *Activity Level:* ${activityLabel}\n` +
+          `📅 *Days Available:* ${daysLabel}\n` +
+          // Training Preferences
+          `🏋️ *Preferred Method:* ${methodLabel}\n` +
+          `🏠 *Has Equipment:* ${finalData.hasEquipment !== null ? (finalData.hasEquipment ? 'Yes' : 'No') : 'Not specified'}\n` +
+          // Medical & Commitment
+          `🏥 *Injuries:* ${finalData.hasInjuries !== null ? (finalData.hasInjuries ? 'Yes' : 'No') : 'Not specified'}\n` +
+          `💯 *Commitment Level:* ${commitmentLabel}\n\n` +
           "I'm ready to start! What are the next steps?";
 
         // 2. Encode the entire message
